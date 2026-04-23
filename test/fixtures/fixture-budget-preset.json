@@ -1,0 +1,7 @@
+{
+  "feb_records": [
+    {"id":"bp1","type":"expense","amount":2000,"category":"food","date":"2026-04-18","note":"餐饮","createdAt":1744963200000,"updatedAt":1744963200000},
+    {"id":"bp2","type":"expense","amount":1000,"category":"shopping","date":"2026-04-19","note":"日用","createdAt":1745049600000,"updatedAt":1745049600000}
+  ],
+  "feb_budget": 5000
+}

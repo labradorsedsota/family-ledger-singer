@@ -1,0 +1,8 @@
+{
+  "feb_records": [
+    {"id":"cr1","type":"expense","amount":2000,"category":"food","date":"2026-04-15","note":"餐饮月度","createdAt":1744704000000,"updatedAt":1744704000000},
+    {"id":"cr2","type":"expense","amount":1500,"category":"shopping","date":"2026-04-15","note":"购物月度","createdAt":1744704001000,"updatedAt":1744704001000},
+    {"id":"cr3","type":"expense","amount":500,"category":"transport","date":"2026-04-15","note":"交通月度","createdAt":1744704002000,"updatedAt":1744704002000}
+  ],
+  "feb_budget": null
+}

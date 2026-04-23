@@ -1,0 +1,7 @@
+{
+  "feb_records": [
+    {"id":"nb1","type":"income","amount":3000,"category":"salary","date":"2026-04-15","note":"工资","createdAt":1744704000000,"updatedAt":1744704000000},
+    {"id":"nb2","type":"expense","amount":5000,"category":"shopping","date":"2026-04-16","note":"大件购物","createdAt":1744790400000,"updatedAt":1744790400000}
+  ],
+  "feb_budget": null
+}

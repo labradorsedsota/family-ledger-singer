@@ -1,0 +1,7 @@
+{
+  "feb_records": [
+    {"id":"enb1","type":"expense","amount":2000,"category":"food","date":"2026-04-18","note":"大额餐饮","createdAt":1744963200000,"updatedAt":1744963200000},
+    {"id":"enb2","type":"expense","amount":1500,"category":"shopping","date":"2026-04-19","note":"家电","createdAt":1745049600000,"updatedAt":1745049600000}
+  ],
+  "feb_budget": null
+}

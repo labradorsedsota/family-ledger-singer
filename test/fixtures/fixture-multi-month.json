@@ -1,0 +1,11 @@
+{
+  "feb_records": [
+    {"id":"mm1","type":"income","amount":8000,"category":"salary","date":"2026-02-15","note":"2月工资","createdAt":1739577600000,"updatedAt":1739577600000},
+    {"id":"mm2","type":"expense","amount":5200,"category":"food","date":"2026-02-20","note":"2月餐饮","createdAt":1740009600000,"updatedAt":1740009600000},
+    {"id":"mm3","type":"income","amount":8000,"category":"salary","date":"2026-03-15","note":"3月工资","createdAt":1742169600000,"updatedAt":1742169600000},
+    {"id":"mm4","type":"expense","amount":4800,"category":"shopping","date":"2026-03-20","note":"3月购物","createdAt":1742601600000,"updatedAt":1742601600000},
+    {"id":"mm5","type":"income","amount":8000,"category":"salary","date":"2026-04-15","note":"4月工资","createdAt":1744704000000,"updatedAt":1744704000000},
+    {"id":"mm6","type":"expense","amount":3500,"category":"food","date":"2026-04-20","note":"4月餐饮","createdAt":1745136000000,"updatedAt":1745136000000}
+  ],
+  "feb_budget": null
+}

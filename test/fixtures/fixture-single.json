@@ -1,0 +1,6 @@
+{
+  "feb_records": [
+    {"id":"s1","type":"expense","amount":25.50,"category":"food","date":"2026-04-22","note":"早餐","createdAt":1745308800000,"updatedAt":1745308800000}
+  ],
+  "feb_budget": null
+}

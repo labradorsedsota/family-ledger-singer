@@ -1,0 +1,6 @@
+{
+  "feb_records": [
+    {"id":"e1","type":"expense","amount":100,"category":"food","date":"2026-04-22","note":"待修改","createdAt":1745308800000,"updatedAt":1745308800000}
+  ],
+  "feb_budget": null
+}

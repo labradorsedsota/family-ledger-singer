@@ -1,0 +1,12 @@
+{
+  "feb_records": [
+    {"id":"m1","type":"expense","amount":50,"category":"food","date":"2026-04-22","note":"午餐","createdAt":1745308800000,"updatedAt":1745308800000},
+    {"id":"m2","type":"expense","amount":60,"category":"transport","date":"2026-04-22","note":"打车","createdAt":1745308801000,"updatedAt":1745308801000},
+    {"id":"m3","type":"expense","amount":40,"category":"shopping","date":"2026-04-22","note":"日用品","createdAt":1745308802000,"updatedAt":1745308802000},
+    {"id":"m4","type":"income","amount":50,"category":"other_income","date":"2026-04-22","note":"红包","createdAt":1745308803000,"updatedAt":1745308803000},
+    {"id":"m5","type":"expense","amount":150,"category":"food","date":"2026-04-21","note":"聚餐","createdAt":1745222400000,"updatedAt":1745222400000},
+    {"id":"m6","type":"income","amount":8000,"category":"salary","date":"2026-04-21","note":"工资","createdAt":1745222401000,"updatedAt":1745222401000},
+    {"id":"m7","type":"expense","amount":35,"category":"entertainment","date":"2026-04-20","note":"电影","createdAt":1745136000000,"updatedAt":1745136000000}
+  ],
+  "feb_budget": null
+}
