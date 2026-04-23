@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>家庭记账本</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <!-- Element Plus CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+  <style>
+    /* ── Global Reset ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #FFFDF0;
+      font-family: 'Space Grotesk', sans-serif;
+      color: #000;
+      min-width: 900px;
+    }
+    .app { min-height: 100vh; background: #FFFDF0; padding: 24px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    /* ── Stats Bento Grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.5fr;
+      grid-template-rows: auto auto;
+      gap: 16px; margin-bottom: 16px;
+    }
+    .card-expense  { grid-column: 1; grid-row: 1; background: #FFD4E0 !important; }
+    .card-income   { grid-column: 2; grid-row: 1; background: #C8F5D8 !important; }
+    .card-budget   { grid-column: 3; grid-row: 1 / 3; background: #E8DEFF !important; }
+    .card-balance  { grid-column: 1; grid-row: 2; background: #FFF3C4 !important; }
+    .card-category { grid-column: 2; grid-row: 2; background: #D4EDFC !important; }
+
+    /* ── Action Grid ── */
+    .action-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px; }
+    .trend-section { margin-bottom: 24px; }
+
+    /* ── Neo-brutalism Shared ── */
+    .nb-card {
+      border-radius: 8px; border: 2px solid #000;
+      box-shadow: 4px 4px 0 #000; padding: 20px;
+      transition: all 0.15s ease;
+    }
+    .nb-card-hover:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #000; }
+
+    /* ── AppHeader ── */
+    .app-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 24px; background: #FFE156; border-radius: 8px;
+      border: 2px solid #000; box-shadow: 4px 4px 0 #000;
+      margin-bottom: 16px; transition: all 0.15s ease;
+    }
+    .app-title { font-size: 24px; font-weight: 800; color: #000; }
+    .month-switcher { display: flex; align-items: center; gap: 12px; }
+    .month-text { font-size: 16px; font-weight: 700; color: #000; min-width: 100px; text-align: center; }
+
+    /* ── StatCard ── */
+    .stat-card { display: flex; flex-direction: column; gap: 12px; }
+    .stat-label { font-size: 14px; color: #000; font-weight: 700; }
+    .stat-amount { font-family: 'Space Mono', monospace; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; line-height: 1; }
+    .amount-expense { color: #FF6B9D; }
+    .amount-income  { color: #000; }
+
+    /* ── BudgetCard ── */
+    .budget-card { display: flex; flex-direction: column; gap: 16px; height: 100%; }
+    .budget-header { display: flex; justify-content: space-between; align-items: center; }
+    .budget-label { font-size: 14px; color: #000; font-weight: 700; }
+    .no-budget { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .budget-body { flex: 1; display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+    .percentage-display { display: flex; align-items: baseline; gap: 8px; }
+    .percentage-num { font-family: 'Space Mono', monospace; font-size: 48px; font-weight: 700; line-height: 1; transition: color 0.3s; }
+    .percentage-sub { font-size: 14px; color: #000; font-weight: 500; }
+    .budget-text { display: flex; justify-content: space-between; font-size: 13px; color: #000; font-weight: 500; }
+    .budget-text strong { font-family: 'Space Mono', monospace; color: #000; font-weight: 700; }
+    .over-budget-tag {
+      display: inline-flex; align-items: center; background: #FF6B9D; color: #fff;
+      border: 2px solid #000; border-radius: 6px; padding: 4px 10px;
+      font-size: 13px; font-weight: 700; box-shadow: 2px 2px 0 #000;
+    }
+
+    /* ── CategoryStats ── */
+    .category-card { display: flex; flex-direction: column; gap: 12px; }
+    .card-title-sm { font-size: 14px; color: #000; font-weight: 700; }
+    .category-list { display: flex; flex-direction: column; gap: 10px; }
+    .category-item { display: flex; flex-direction: column; gap: 4px; }
+    .category-row { display: flex; align-items: center; gap: 8px; }
+    .category-name { flex: 1; font-size: 13px; color: #000; font-weight: 500; }
+    .category-amount { font-family: 'Space Mono', monospace; font-size: 13px; color: #000; min-width: 80px; text-align: right; font-weight: 700; }
+    .category-pct { font-family: 'Space Mono', monospace; font-size: 13px; color: #000; font-weight: 700; min-width: 42px; text-align: right; }
+
+    /* ── RecordForm ── */
+    .record-form-card { background: #fff; }
+    .card-title { font-size: 18px; font-weight: 800; color: #000; margin: 0 0 20px 0; }
+    .submit-btn {
+      width: 100%; height: 40px; font-size: 16px; font-weight: 700;
+      background-color: #000 !important; border-color: #000 !important;
+      color: #FFE156 !important; border-radius: 6px !important;
+      box-shadow: 3px 3px 0 #555; transition: all 0.15s ease;
+    }
+    .submit-btn:hover { transform: translate(3px, 3px); box-shadow: none !important; }
+
+    /* ── RecordList ── */
+    .record-list-card { background: #fff; display: flex; flex-direction: column; gap: 12px; min-height: 300px; }
+    .bill-collapse { border: none; }
+    .bill-collapse .el-collapse-item__header {
+      background: #FFFDF0; border-radius: 6px; padding: 8px 12px;
+      font-size: 14px; font-weight: 700; color: #000;
+      border: none; border-bottom: 2px solid #000; height: auto; line-height: 1.4;
+    }
+    .bill-collapse .el-collapse-item__wrap { border: none; }
+    .bill-collapse .el-collapse-item__content { padding: 4px 0; }
+    .bill-collapse .el-collapse-item { border: none; margin-bottom: 8px; }
+    .group-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .group-date { font-size: 14px; color: #000; font-weight: 700; }
+    .group-expense { font-size: 13px; color: #000; font-weight: 500; }
+    .group-expense strong { font-family: 'Space Mono', monospace; color: #FF6B9D; }
+    .group-income { font-size: 13px; color: #000; font-weight: 500; }
+    .group-income strong { font-family: 'Space Mono', monospace; color: #000; }
+    .record-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border-radius: 6px; border: 2px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .record-item:hover { background: #FFFDF0; border-color: #000; }
+    .record-main { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .record-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
+    .record-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .record-category { font-size: 14px; font-weight: 700; color: #000; }
+    .record-note { font-size: 12px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .record-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .record-amount { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 700; min-width: 90px; text-align: right; }
+    .record-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+    .record-item:hover .record-actions { opacity: 1; }
+
+    /* ── MonthlyTrend ── */
+    .trend-card { background: #fff; }
+    .trend-content { display: flex; flex-direction: column; gap: 6px; padding: 4px 0; }
+    .trend-row { display: flex; align-items: center; gap: 12px; }
+    .trend-label { font-size: 13px; color: #000; font-weight: 700; min-width: 32px; }
+    .trend-amount { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; }
+    .trend-amount-income { color: #88D9A8; }
+    .trend-amount-expense { color: #FF6B9D; }
+    .balance-row { padding-top: 4px; border-top: 2px solid #000; margin-top: 2px; }
+
+    /* ── Neo-brutalism: Element Plus Overrides ── */
+    .el-button { border: 2px solid #000 !important; box-shadow: 3px 3px 0 #000; border-radius: 6px !important; background: #fff; color: #000; font-weight: 700; transition: all 0.15s ease; }
+    .el-button:hover { transform: translate(3px, 3px); box-shadow: none !important; }
+    .el-button--primary { background-color: #000 !important; border-color: #000 !important; color: #FFE156 !important; box-shadow: 3px 3px 0 #555; }
+    .el-button--primary:hover { transform: translate(3px, 3px); box-shadow: none !important; }
+    .el-button.is-circle { box-shadow: 2px 2px 0 #000; }
+    .el-button.is-circle:hover { transform: translate(2px, 2px); box-shadow: none !important; }
+    .el-input__wrapper, .el-select__wrapper, .el-input-number { border-radius: 6px; box-shadow: 2px 2px 0 #000 !important; border: 2px solid #000 !important; }
+    .el-input-number .el-input__wrapper { padding-left: 11px; padding-right: 11px; }
+    .el-form-item__label { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: #000; }
+    .el-radio__inner { border-color: #000; }
+    .el-radio.is-checked .el-radio__inner { background-color: #000; border-color: #000; }
+    .el-radio.is-checked .el-radio__label { color: #000; font-weight: 700; }
+    .el-dialog { border-radius: 8px; border: 2px solid #000; box-shadow: 6px 6px 0 #000; }
+    .el-dialog__title { font-family: 'Space Grotesk', sans-serif; font-weight: 800; color: #000; }
+    .el-progress-bar__outer { border-radius: 4px; background: #E5E5E5; border: 1px solid #000; }
+    .el-progress-bar__inner { border-radius: 4px; transition: width 0.6s ease, background-color 0.3s; }
+    .el-timeline-item__timestamp { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: #000; }
+    .el-timeline-item__node { border: 2px solid #000; }
+    .cat-progress .el-progress-bar__inner { background: #7EC8E3; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="app">
+      <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+          <h1 class="app-title">家庭记账本</h1>
+          <div class="month-switcher">
+            <el-button :icon="ArrowLeft" circle size="small" @click="nextMonth"></el-button>
+            <span class="month-text">{{ monthDisplay }}</span>
+            <el-button :icon="ArrowRight" circle size="small" :disabled="isCurrentMonth" @click="prevMonth"></el-button>
+          </div>
+        </header>
+
+        <!-- Stats Bento Grid -->
+        <section class="stats-grid">
+          <!-- Expense -->
+          <div class="nb-card nb-card-hover stat-card card-expense">
+            <div class="stat-label">本月支出</div>
+            <div class="stat-amount amount-expense">{{ fmtAmount(totalExpense) }}</div>
+          </div>
+          <!-- Income -->
+          <div class="nb-card nb-card-hover stat-card card-income">
+            <div class="stat-label">本月收入</div>
+            <div class="stat-amount amount-income">{{ fmtAmount(totalIncome) }}</div>
+          </div>
+          <!-- Budget -->
+          <div class="nb-card nb-card-hover budget-card card-budget">
+            <div class="budget-header">
+              <span class="budget-label">预算进度</span>
+              <el-button size="small" @click="showBudgetDialog = true">设置</el-button>
+            </div>
+            <div v-if="!budgetProgress.hasBudget" class="no-budget">
+              <el-empty description="未设置预算，点击设置" :image-size="64"></el-empty>
+            </div>
+            <div v-else class="budget-body">
+              <div class="percentage-display">
+                <span class="percentage-num" :style="{ color: progressColor }">{{ displayPercentage }}%</span>
+                <span class="percentage-sub">已使用</span>
+              </div>
+              <el-progress :percentage="Math.min(budgetProgress.actualPercentage, 100)" :color="progressColor" :stroke-width="12" :show-text="false" class="budget-progress"></el-progress>
+              <div class="budget-text">
+                <span>已用 <strong>{{ fmtAmount(budgetProgress.used) }}</strong></span>
+                <span>预算 <strong>{{ fmtAmount(budgetProgress.total) }}</strong></span>
+              </div>
+              <div v-if="budgetProgress.isOverBudget" class="over-budget-tag">
+                超支 {{ fmtAmount(budgetProgress.used - budgetProgress.total) }}
+              </div>
+            </div>
+          </div>
+          <!-- Balance -->
+          <div class="nb-card nb-card-hover stat-card card-balance">
+            <div class="stat-label">本月结余</div>
+            <div class="stat-amount" :class="balance >= 0 ? 'amount-income' : 'amount-expense'">{{ fmtBalance(balance) }}</div>
+          </div>
+          <!-- Category Stats -->
+          <div class="nb-card nb-card-hover category-card card-category">
+            <div class="card-title-sm">分类支出占比</div>
+            <el-empty v-if="categoryStats.length === 0" description="暂无支出数据" :image-size="48"></el-empty>
+            <div v-else class="category-list">
+              <div v-for="item in categoryStats" :key="item.code" class="category-item">
+                <div class="category-row">
+                  <span class="category-name">{{ getCategoryByCode(item.code).icon }} {{ getCategoryByCode(item.code).name }}</span>
+                  <span class="category-amount">{{ fmtAmount(item.amount) }}</span>
+                  <span class="category-pct">{{ item.percentage }}%</span>
+                </div>
+                <el-progress :percentage="item.percentage" :show-text="false" :stroke-width="6" color="#2563eb" class="cat-progress"></el-progress>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Action: Form + List -->
+        <section class="action-grid">
+          <!-- Record Form -->
+          <div class="nb-card record-form-card">
+            <h3 class="card-title">记一笔</h3>
+            <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-position="top" @submit.prevent="handleAdd">
+              <el-form-item label="类型">
+                <el-radio-group v-model="addForm.type" @change="addForm.category = ''">
+                  <el-radio value="expense">支出</el-radio>
+                  <el-radio value="income">收入</el-radio>
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item label="金额" prop="amount">
+                <el-input-number v-model="addForm.amount" :min="0" :max="9999999.99" :precision="2" :controls="false" placeholder="请输入金额" style="width:100%"></el-input-number>
+              </el-form-item>
+              <el-form-item label="分类" prop="category">
+                <el-select v-model="addForm.category" placeholder="请选择分类" style="width:100%">
+                  <el-option v-for="cat in addCategories" :key="cat.code" :label="cat.icon + ' ' + cat.name" :value="cat.code"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="日期" prop="date">
+                <el-date-picker v-model="addForm.date" type="date" placeholder="选择日期" format="YYYY-MM-DD" value-format="YYYY-MM-DD" :disabled-date="disabledDate" style="width:100%"></el-date-picker>
+              </el-form-item>
+              <el-form-item label="备注" prop="note">
+                <el-input v-model="addForm.note" placeholder="备注（选填）" maxlength="50" show-word-limit></el-input>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" class="submit-btn" :disabled="addSubmitting" @click="handleAdd">记一笔</el-button>
+              </el-form-item>
+            </el-form>
+          </div>
+          <!-- Record List -->
+          <div class="nb-card record-list-card">
+            <div class="card-title">账单列表</div>
+            <el-empty v-if="groupedRecords.length === 0" description="还没有记账记录，开始记第一笔吧" :image-size="80"></el-empty>
+            <el-collapse v-else v-model="collapseActive" class="bill-collapse">
+              <el-collapse-item v-for="group in groupedRecords" :key="group.date" :name="group.date">
+                <template #title>
+                  <div class="group-title">
+                    <span class="group-date">{{ fmtDateDisplay(group.date) }}</span>
+                    <span v-if="group.totalExpense > 0" class="group-expense">支出 <strong>{{ fmtAmount(group.totalExpense) }}</strong></span>
+                    <span v-if="group.totalIncome > 0" class="group-income">收入 <strong>{{ fmtAmount(group.totalIncome) }}</strong></span>
+                  </div>
+                </template>
+                <div v-for="record in group.items" :key="record.id" class="record-item">
+                  <div class="record-main">
+                    <span class="record-icon">{{ getCategoryByCode(record.category).icon }}</span>
+                    <div class="record-info">
+                      <span class="record-category">{{ getCategoryByCode(record.category).name }}</span>
+                      <span v-if="record.note" class="record-note">{{ record.note }}</span>
+                    </div>
+                  </div>
+                  <div class="record-right">
+                    <span class="record-amount" :class="record.type === 'expense' ? 'amount-expense' : 'amount-income'">
+                      {{ fmtRecordAmount(record.amount, record.type) }}
+                    </span>
+                    <div class="record-actions">
+                      <el-button :icon="Edit" size="small" circle @click.stop="openEdit(record)"></el-button>
+                      <el-button :icon="Delete" size="small" circle type="danger" plain @click.stop="handleDelete(record)"></el-button>
+                    </div>
+                  </div>
+                </div>
+              </el-collapse-item>
+            </el-collapse>
+          </div>
+        </section>
+
+        <!-- Monthly Trend -->
+        <section class="trend-section">
+          <div class="nb-card trend-card">
+            <h3 class="card-title">月度收支趋势</h3>
+            <el-empty v-if="trendData.length === 0" description="暂无趋势数据" :image-size="64"></el-empty>
+            <el-timeline v-else>
+              <el-timeline-item v-for="item in trendData" :key="item.month" :timestamp="fmtMonthDisplay(item.month)" placement="top" :color="item.balance >= 0 ? '#10b981' : '#ef4444'">
+                <div class="trend-content">
+                  <div class="trend-row">
+                    <span class="trend-label">收入</span>
+                    <span class="trend-amount trend-amount-income">{{ fmtAmount(item.totalIncome) }}</span>
+                  </div>
+                  <div class="trend-row">
+                    <span class="trend-label">支出</span>
+                    <span class="trend-amount trend-amount-expense">{{ fmtAmount(item.totalExpense) }}</span>
+                  </div>
+                  <div class="trend-row balance-row">
+                    <span class="trend-label">结余</span>
+                    <span class="trend-amount" :class="item.balance >= 0 ? 'trend-amount-income' : 'trend-amount-expense'">{{ fmtBalance(item.balance) }}</span>
+                  </div>
+                </div>
+              </el-timeline-item>
+            </el-timeline>
+          </div>
+        </section>
+      </div>
+
+      <!-- Edit Dialog -->
+      <el-dialog v-model="showEditDialog" title="编辑账单" width="480px" :close-on-click-modal="false">
+        <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-position="top">
+          <el-form-item label="类型">
+            <el-radio-group v-model="editForm.type" @change="editForm.category = ''">
+              <el-radio value="expense">支出</el-radio>
+              <el-radio value="income">收入</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="金额" prop="amount">
+            <el-input-number v-model="editForm.amount" :min="0" :max="9999999.99" :precision="2" :controls="false" placeholder="请输入金额" style="width:100%"></el-input-number>
+          </el-form-item>
+          <el-form-item label="分类" prop="category">
+            <el-select v-model="editForm.category" placeholder="请选择分类" style="width:100%">
+              <el-option v-for="cat in editCategories" :key="cat.code" :label="cat.icon + ' ' + cat.name" :value="cat.code"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="日期" prop="date">
+            <el-date-picker v-model="editForm.date" type="date" placeholder="选择日期" format="YYYY-MM-DD" value-format="YYYY-MM-DD" :disabled-date="disabledDate" style="width:100%"></el-date-picker>
+          </el-form-item>
+          <el-form-item label="备注" prop="note">
+            <el-input v-model="editForm.note" placeholder="备注（选填）" maxlength="50" show-word-limit></el-input>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="showEditDialog = false">取消</el-button>
+          <el-button type="primary" :loading="editSaving" @click="handleEditSave">保存</el-button>
+        </template>
+      </el-dialog>
+
+      <!-- Budget Dialog -->
+      <el-dialog v-model="showBudgetDialog" title="设置月预算" width="400px" :close-on-click-modal="false">
+        <el-form ref="budgetFormRef" :model="budgetForm" :rules="budgetRules" label-position="top">
+          <el-form-item label="月预算金额（元）" prop="amount">
+            <el-input-number v-model="budgetForm.amount" :min="0" :max="9999999.99" :precision="2" :controls="false" placeholder="请输入月预算金额，0 表示清除预算" style="width:100%"></el-input-number>
+          </el-form-item>
+          <div style="font-size:12px;color:#555;font-weight:500;margin-top:-8px;">提示：输入 0 等同于清除预算</div>
+        </el-form>
+        <template #footer>
+          <el-button @click="showBudgetDialog = false">取消</el-button>
+          <el-button type="primary" :loading="budgetSaving" @click="handleBudgetSave">保存</el-button>
+        </template>
+      </el-dialog>
+    </div>
+  </div>
+
+  <!-- CDN: Vue 3 + Element Plus + Icons -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+  <script>
+    const { createApp, ref, reactive, computed, watch, nextTick } = Vue
+
+    // ══════════════════════════════════════════════
+    // Constants
+    // ══════════════════════════════════════════════
+    const EXPENSE_CATEGORIES = [
+      { code: 'food', name: '餐饮', icon: '🍽️' },
+      { code: 'transport', name: '交通', icon: '🚗' },
+      { code: 'shopping', name: '购物', icon: '🛒' },
+      { code: 'housing', name: '居住', icon: '🏠' },
+      { code: 'entertainment', name: '娱乐', icon: '🎮' },
+      { code: 'medical', name: '医疗', icon: '🏥' },
+      { code: 'education', name: '教育', icon: '📚' },
+      { code: 'other_expense', name: '其他', icon: '📦' }
+    ]
+    const INCOME_CATEGORIES = [
+      { code: 'salary', name: '工资', icon: '💰' },
+      { code: 'bonus', name: '奖金', icon: '🎁' },
+      { code: 'investment', name: '投资', icon: '📈' },
+      { code: 'other_income', name: '其他', icon: '💵' }
+    ]
+    function getCategoriesByType(type) {
+      return EXPENSE_CATEGORIES
+    }
+    function getCategoryByCode(code) {
+      const all = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES]
+      return all.find(c => c.code === code) || { code, name: code, icon: '📦' }
+    }
+
+    // ══════════════════════════════════════════════
+    // Format Utilities
+    // ══════════════════════════════════════════════
+    function formatAmount(amount) {
+      const num = Number(amount) || 0
+      const fixed = num.toFixed(2)
+      const parts = fixed.split('.')
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+      return '¥' + parts.join('.')
+    }
+    function sumAmounts(records) {
+      const sum = records.reduce((acc, r) => acc + Number(r.amount), 0)
+      return Number(sum.toFixed(2))
+    }
+    function formatDate(date) {
+      const d = new Date(date)
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    }
+    function formatDateDisplay(dateStr) {
+      const d = new Date(dateStr)
+      const weekdays = ['日','一','二','三','四','五','六']
+      return `${d.getMonth()+1}月${d.getDate()}日（周${weekdays[d.getDay()]}）`
+    }
+    function getCurrentMonth() {
+      const d = new Date()
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+    }
+    function formatMonthDisplay(monthStr) {
+      const [year, month] = monthStr.split('-')
+      return `${year}年${Number(month)}月`
+    }
+    function isInMonth(dateStr, monthStr) { return dateStr.startsWith(monthStr) }
+    function getPrevMonth(monthStr) {
+      const [y, m] = monthStr.split('-').map(Number)
+      return m === 1 ? `${y-1}-12` : `${y}-${String(m-1).padStart(2,'0')}`
+    }
+    function getNextMonth(monthStr) {
+      const [y, m] = monthStr.split('-').map(Number)
+      return m === 12 ? `${y+1}-01` : `${y}-${String(m+1).padStart(2,'0')}`
+    }
+    function getRecentMonths(count = 6) {
+      const months = []; let cur = getCurrentMonth()
+      for (let i = 0; i < count; i++) { months.unshift(cur); cur = getPrevMonth(cur) }
+      return months
+    }
+    function formatBalance(amount) {
+      const num = Number(amount)
+      return num < 0 ? '-' + formatAmount(Math.abs(num)) : formatAmount(num)
+    }
+    function formatRecordAmount(amount, type) {
+      const f = formatAmount(Number(amount))
+      return type === 'expense' ? '-' + f : '+' + f
+    }
+    function generateId() {
+      return crypto.randomUUID ? crypto.randomUUID() : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx').replace(/[xy]/g, c => {
+        const r = Math.random()*16|0
+        return (c === 'x' ? r : (r&0x3|0x8)).toString(16)
+      })
+    }
+
+    // ══════════════════════════════════════════════
+    // Storage Layer
+    // ══════════════════════════════════════════════
+    const RECORDS_KEY = 'feb_records'
+    const BUDGET_KEY = 'feb_budget'
+
+    function loadRecordsFromStorage() {
+      try {
+        const data = localStorage.getItem(RECORDS_KEY)
+        if (data) {
+          const parsed = JSON.parse(data)
+          if (Array.isArray(parsed)) {
+            return parsed.filter(r => r && r.id && r.type && r.amount && r.category && r.date)
+          }
+        }
+      } catch (e) { /* ignore */ }
+      return []
+    }
+    function saveRecordsToStorage(records) {
+      return false
+    }
+    function loadBudgetFromStorage() {
+      try {
+        const data = localStorage.getItem(BUDGET_KEY)
+        if (data) { const p = JSON.parse(data); if (typeof p === 'number' && p > 0) return p }
+      } catch (e) { /* ignore */ }
+      return null
+    }
+    function saveBudgetToStorage(val) {
+      try {
+        if (val && val > 0) localStorage.setItem(BUDGET_KEY, JSON.stringify(val))
+        else localStorage.removeItem(BUDGET_KEY)
+        return true
+      } catch (e) { return false }
+    }
+
+    // ══════════════════════════════════════════════
+    // App
+    // ══════════════════════════════════════════════
+    const app = createApp({
+      setup() {
+        const { ArrowLeft, ArrowRight, Edit, Delete } = ElementPlusIconsVue
+
+        // ── State ──
+        const records = ref(loadRecordsFromStorage())
+        const budget = ref(loadBudgetFromStorage())
+        const currentMonth = ref(getCurrentMonth())
+        const showEditDialog = ref(false)
+        const showBudgetDialog = ref(false)
+        const editingRecordId = ref(null)
+
+        // ── Refs ──
+        const addFormRef = ref(null)
+        const editFormRef = ref(null)
+        const budgetFormRef = ref(null)
+
+        // ── Add Form ──
+        const addForm = reactive({ type: 'expense', amount: null, category: '', date: formatDate(new Date()), note: '' })
+        const addSubmitting = ref(false)
+        const addCategories = computed(() => getCategoriesByType(addForm.type))
+
+        // ── Edit Form ──
+        const editForm = reactive({ type: 'expense', amount: null, category: '', date: '', note: '' })
+        const editSaving = ref(false)
+        const editCategories = computed(() => getCategoriesByType(editForm.type))
+
+        // ── Budget Form ──
+        const budgetForm = reactive({ amount: null })
+        const budgetSaving = ref(false)
+
+        // ── Validation rules ──
+        const amountValidator = (rule, value, callback) => {
+          if (value === null || value === undefined || value === '') callback(new Error('请输入金额'))
+          else if (value <= 0) callback(new Error('金额必须大于 0'))
+          else if (value > 9999999.99) callback(new Error('金额不能超过 9,999,999.99'))
+          else callback()
+        }
+        const budgetAmountValidator = (rule, value, callback) => {
+          if (value === null || value === undefined || value === '') callback(new Error('请输入金额'))
+          else if (value < 0) callback(new Error('预算金额不能为负数'))
+          else if (value > 9999999.99) callback(new Error('金额不能超过 9,999,999.99'))
+          else callback()
+        }
+        const addRules = {
+          amount: [{ validator: amountValidator, trigger: 'blur' }],
+          category: [{ required: true, message: '请选择分类', trigger: 'change' }],
+          date: [{ required: true, message: '请选择日期', trigger: 'change' }],
+          note: [{ max: 50, message: '备注最多 50 个字符', trigger: 'blur' }]
+        }
+        const editRules = { ...addRules }
+        const budgetRules = { amount: [{ validator: budgetAmountValidator, trigger: 'blur' }] }
+
+        function disabledDate(date) { return date > new Date() }
+
+        // ── Month nav ──
+        const monthDisplay = computed(() => formatMonthDisplay(currentMonth.value))
+        const isCurrentMonth = computed(() => currentMonth.value === getCurrentMonth())
+        function prevMonth() { currentMonth.value = getPrevMonth(currentMonth.value) }
+        function nextMonth() { currentMonth.value = getNextMonth(currentMonth.value) }
+
+        // ── Computed stats ──
+        const monthRecords = computed(() => records.value.filter(r => isInMonth(r.date, currentMonth.value)))
+        const monthExpenses = computed(() => monthRecords.value.filter(r => r.type === 'expense'))
+        const monthIncomes = computed(() => monthRecords.value.filter(r => r.type === 'income'))
+        const totalExpense = computed(() => sumAmounts(monthExpenses.value))
+        const totalIncome = computed(() => sumAmounts(monthIncomes.value))
+        const balance = computed(() => Number((totalIncome.value - totalExpense.value).toFixed(2)))
+
+        // Category stats
+        const categoryStats = computed(() => {
+          const total = totalExpense.value
+          if (total === 0) return []
+          const map = {}
+          monthExpenses.value.forEach(r => { map[r.category] = (map[r.category] || 0) + Number(r.amount) })
+          return Object.entries(map)
+            .map(([code, amount]) => ({ code, amount: Number(amount.toFixed(2)), percentage: Number(((amount / total) * 100).toFixed(1)) }))
+            .sort((a, b) => b.amount - a.amount)
+        })
+
+        // Grouped records
+        const groupedRecords = computed(() => {
+          const sorted = [...monthRecords.value].sort((a, b) => {
+            if (a.date !== b.date) return b.date.localeCompare(a.date)
+            return b.createdAt - a.createdAt
+          })
+          const groups = {}
+          sorted.forEach(r => { if (!groups[r.date]) groups[r.date] = []; groups[r.date].push(r) })
+          return Object.entries(groups)
+            .map(([date, items]) => ({
+              date, items,
+              totalExpense: sumAmounts(items.filter(r => r.type === 'expense')),
+              totalIncome: sumAmounts(items.filter(r => r.type === 'income'))
+            }))
+            .sort((a, b) => b.date.localeCompare(a.date))
+        })
+
+        // Collapse active
+        const today = formatDate(new Date())
+        const yesterday = (() => { const d = new Date(); d.setDate(d.getDate()-1); return formatDate(d) })()
+        const collapseActive = ref([today, yesterday])
+        watch(groupedRecords, (groups) => {
+          const dates = groups.map(g => g.date)
+          collapseActive.value = [today, yesterday].filter(d => dates.includes(d))
+        })
+
+        // Trend data
+        const trendData = computed(() => {
+          const allMonths = getRecentMonths(6)
+          const cur = getCurrentMonth()
+          const dataMonths = new Set(records.value.map(r => r.date.substring(0, 7)))
+          if (dataMonths.size === 0) return [{ month: cur, totalExpense: 0, totalIncome: 0, balance: 0 }]
+          const first = allMonths.find(m => dataMonths.has(m))
+          if (!first) return [{ month: cur, totalExpense: 0, totalIncome: 0, balance: 0 }]
+          const si = allMonths.indexOf(first), ei = allMonths.indexOf(cur)
+          return allMonths.slice(si, ei + 1).map(m => {
+            const mr = records.value.filter(r => isInMonth(r.date, m))
+            const me = sumAmounts(mr.filter(r => r.type === 'expense'))
+            const mi = sumAmounts(mr.filter(r => r.type === 'income'))
+            return { month: m, totalExpense: me, totalIncome: mi, balance: Number((mi - me).toFixed(2)) }
+          })
+        })
+
+        // Budget progress
+        const budgetProgress = computed(() => {
+          if (!budget.value || budget.value <= 0) return { hasBudget: false, percentage: 0, used: 0, total: 0, isOverBudget: false, isWarning: false }
+          const pct = Number(((totalExpense.value / budget.value) * 100).toFixed(1))
+          return { hasBudget: true, percentage: Math.min(pct, 100), actualPercentage: pct, used: totalExpense.value, total: budget.value, isOverBudget: totalExpense.value > budget.value, isWarning: pct >= 80 && pct < 100 }
+        })
+        const displayPercentage = computed(() => budgetProgress.value.actualPercentage != null ? budgetProgress.value.actualPercentage.toFixed(1) : '0.0')
+        const progressColor = computed(() => {
+          return '#E8DEFF'
+        })
+
+        // Over-budget notification (once per page load)
+        let overBudgetShown = false
+        watch([totalExpense, () => budget.value], ([expense, bv]) => {
+          if (bv && bv > 0 && expense > bv && !overBudgetShown) {
+            overBudgetShown = true
+            ElementPlus.ElNotification({ title: '超预算提醒', message: '本月支出已超预算！', type: 'error', duration: 5000 })
+          }
+        }, { immediate: true })
+
+        // ── CRUD ──
+        function saveRecords() { return saveRecordsToStorage(records.value) }
+
+        async function handleAdd() {
+          if (addSubmitting.value) return
+          try {
+            await addFormRef.value.validate()
+            addSubmitting.value = true
+            const now = Date.now()
+            const record = {
+              id: generateId(), type: addForm.type,
+              amount: Number(Number(addForm.amount).toFixed(2)),
+              category: addForm.category, date: addForm.date,
+              note: addForm.note || '', createdAt: now, updatedAt: now
+            }
+            records.value.push(record)
+            if (saveRecords()) {
+              ElementPlus.ElMessage.success('记账成功')
+              addForm.amount = null; addForm.category = ''; addForm.date = formatDate(new Date()); addForm.note = ''
+              addFormRef.value?.clearValidate()
+            } else {
+              records.value.pop()
+              ElementPlus.ElNotification.error({ title: '存储失败', message: '存储空间已满，请清理旧数据后重试', duration: 5000 })
+            }
+          } catch (e) { /* validation failed */ }
+          finally { setTimeout(() => { addSubmitting.value = false }, 1000) }
+        }
+
+        function openEdit(record) {
+          editingRecordId.value = record.id
+          editForm.type = record.type; editForm.amount = record.amount
+          editForm.category = record.category; editForm.date = record.date
+          editForm.note = record.note || ''
+          showEditDialog.value = true
+          nextTick(() => editFormRef.value?.clearValidate())
+        }
+
+        async function handleEditSave() {
+          if (editSaving.value) return
+          try {
+            await editFormRef.value.validate()
+            editSaving.value = true
+            const idx = records.value.findIndex(r => r.id === editingRecordId.value)
+            if (idx === -1) return
+            const old = records.value[idx]
+            records.value[idx] = {
+              ...old, type: editForm.type,
+              amount: Number(Number(editForm.amount).toFixed(2)),
+              category: editForm.category, date: editForm.date,
+              note: editForm.note || '', updatedAt: Date.now()
+            }
+            if (saveRecords()) {
+              ElementPlus.ElMessage.success('修改成功')
+              showEditDialog.value = false
+            } else { records.value[idx] = old }
+          } catch (e) { /* validation failed */ }
+          finally { editSaving.value = false }
+        }
+
+        async function handleDelete(record) {
+          try {
+            await ElementPlus.ElMessageBox.confirm('确定删除这条记录吗？', '删除确认', {
+              confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning',
+              confirmButtonClass: 'el-button--danger'
+            })
+            const idx = records.value.findIndex(r => r.id === record.id)
+            if (idx !== -1) return
+            const old = records.value[idx]
+            records.value.splice(idx, 1)
+            if (saveRecords()) { ElementPlus.ElMessage.success('删除成功') }
+            else { records.value.splice(idx, 0, old) }
+          } catch (e) { /* cancelled */ }
+        }
+
+        // ── Budget save ──
+        watch(showBudgetDialog, (val) => {
+          if (val) { budgetForm.amount = budget.value || null; nextTick(() => budgetFormRef.value?.clearValidate()) }
+        })
+        async function handleBudgetSave() {
+          if (budgetSaving.value) return
+          try {
+            await budgetFormRef.value.validate()
+            budgetSaving.value = true
+            const amt = budgetForm.amount || 0
+            const newVal = amt <= 0 ? null : Number(Number(amt).toFixed(2))
+            budget.value = newVal
+            if (saveBudgetToStorage(newVal)) {
+              ElementPlus.ElMessage.success(newVal ? '预算设置成功' : '预算已清除')
+              showBudgetDialog.value = false
+            }
+          } catch (e) { /* validation failed */ }
+          finally { budgetSaving.value = false }
+        }
+
+        return {
+          // Icons
+          ArrowLeft, ArrowRight, Edit, Delete,
+          // State
+          records, budget, currentMonth, showEditDialog, showBudgetDialog,
+          // Form refs
+          addFormRef, editFormRef, budgetFormRef,
+          // Add form
+          addForm, addSubmitting, addCategories, addRules,
+          // Edit form
+          editForm, editSaving, editCategories, editRules,
+          // Budget form
+          budgetForm, budgetSaving, budgetRules,
+          // Computed
+          monthDisplay, isCurrentMonth, totalExpense, totalIncome, balance,
+          categoryStats, groupedRecords, collapseActive, trendData,
+          budgetProgress, displayPercentage, progressColor,
+          // Methods
+          prevMonth, nextMonth, handleAdd, openEdit, handleEditSave, handleDelete,
+          handleBudgetSave, disabledDate,
+          // Helpers exposed to template
+          fmtAmount: formatAmount, fmtBalance: formatBalance,
+          fmtRecordAmount: formatRecordAmount, fmtDateDisplay: formatDateDisplay,
+          fmtMonthDisplay: formatMonthDisplay, getCategoryByCode
+        }
+      }
+    })
+
+    app.use(ElementPlus)
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+      app.component(key, component)
+    }
+    app.mount('#app')
+  </script>
+</body>
+</html>
