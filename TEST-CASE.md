@@ -12,9 +12,9 @@
 | 编写者 | Moss（QA） |
 | 日期 | 2026-04-22 |
 | 状态 | Draft — 待 PM 确认 |
-| PRD | [PRD.md](https://github.com/labradorsedsota/family-ledger/blob/main/PRD.md) |
-| 部署地址 | https://labradorsedsota.github.io/family-ledger/ |
-| Repo | https://github.com/labradorsedsota/family-ledger |
+| PRD | [PRD.md](https://github.com/labradorsedsota/family-ledger-singer/blob/main/PRD.md) |
+| 部署地址 | https://labradorsedsota.github.io/family-ledger-singer/ |
+| Repo | https://github.com/labradorsedsota/family-ledger-singer |
 | 执行规范 | [mano-cua-execution-spec.md v1.6](https://github.com/labradorsedsota/pm-cockpit/blob/main/test/mano-cua-execution-spec.md) |
 | 设计规范 | [test-case-design-spec.md v1.0](https://github.com/labradorsedsota/pm-cockpit/blob/main/test/test-case-design-spec.md) |
 
@@ -23,6 +23,7 @@
 | 版本 | 日期 | 变更内容 | 作者 |
 |------|------|---------|------|
 | v1.0 | 2026-04-22 | 初版 TEST-CASE：L1×5 + L2×11(+2 子项) + L3×7 = 25 mano-cua sessions | Moss |
+| v1.1 | 2026-04-23 | 新增 L2-12（月份导航方向正确性），URL 更新为 singer 版 | 智子 |
 
 ---
 
@@ -30,7 +31,7 @@
 
 ### 2.1 测试目标
 
-对照 PRD 第 10 章验收汇总，对已部署的家庭记账本进行完整功能测试，覆盖冒烟（L1）、功能（L2）、边界与异常（L3）三个层级共 23 条测试点（25 个 mano-cua session）。
+对照 PRD 第 10 章验收汇总，对已部署的家庭记账本进行完整功能测试，覆盖冒烟（L1）、功能（L2）、边界与异常（L3）三个层级共 24 条测试点（26 个 mano-cua session）。
 
 ### 2.2 测试范围
 
@@ -38,7 +39,7 @@
 |------|------|---------|---------|
 | 记账表单 | F-01 | 4.1 | L1-01, L1-02, L2-01, L2-02, L3-05, L3-07 |
 | 账单列表 | F-02 | 4.2 | L1-04, L1-05, L2-03, L3-01, L3-06 |
-| 统计看板 | F-03 | 4.3 | L1-03, L2-11, L3-04 |
+| 统计看板 | F-03 | 4.3 | L1-03, L2-11, L2-12, L3-04 |
 | 分类占比 | F-04 | 4.4 | L2-09, L3-02 |
 | 预算设置 | F-05 | 4.5 | L2-06, L2-07, L2-08 |
 | 月度趋势 | F-06 | 4.6 | L2-10, L3-03 |
@@ -71,7 +72,7 @@
 ## 第 3 章 测试用例
 
 > **通用 Pre-flight 模板**（以下用例中简写为"标准 Pre-flight"）：
-> 1. `open -a "Google Chrome" "https://labradorsedsota.github.io/family-ledger/"`
+> 1. `open -a "Google Chrome" "https://labradorsedsota.github.io/family-ledger-singer/"`
 > 2. `sleep 3`
 > 3. 窗口最大化（AppleScript，见执行规范条款 1）
 > 4. 数据注入或清空（具体见各用例 Pre-flight）
@@ -244,7 +245,7 @@
 
 ---
 
-### 3.2 L2 — 功能测试（11 条，含 2 个子项 = 13 sessions）
+### 3.2 L2 — 功能测试（12 条，含 2 个子项 = 14 sessions）
 
 ---
 
@@ -618,6 +619,39 @@
 
 ---
 
+#### L2-12 月份导航箭头方向正确性
+
+| 项 | 值 |
+|---|---|
+| mosstid | `FEB-feb-v1-L2.12-001` |
+| 关联 AC | AC-03-06（月份切换时统计看板和账单列表同步切换） |
+| 设计技术 | PRD 追溯 + BVA — 月份导航方向边界 |
+| 数据依赖 | CUSTOM |
+| 冲突标记 | 无 |
+| 前置策略 | 策略二（注入数据后验证导航行为） |
+| fixture | `fixture-mixed.json` |
+
+**Pre-flight：**
+标准 Pre-flight → 注入 `fixture-mixed.json`（含 2026-04 数据）→ `location.reload();`
+
+**任务描述：**
+在家庭记账本页面，观察页面顶部 Header 区域的月份切换控件（左箭头、月份文字、右箭头），完成以下操作：
+1. 确认当前显示的月份文字（应为「2026年4月」）
+2. 点击左箭头按钮（←）一次
+3. 观察月份文字的变化
+4. 再点击右箭头按钮（→）一次
+5. 观察月份文字是否回到原来的月份
+
+仅在当前页面操作，不要导航到其他网址。
+
+**Expected Results（逐条）：**
+1. 初始月份显示「2026年4月」
+2. 点击左箭头后，月份文字变为「2026年3月」（左箭头 = 往过去回退一个月）
+3. 点击右箭头后，月份文字回到「2026年4月」（右箭头 = 往未来前进一个月）
+4. 统计看板随月份切换同步更新（切到 3 月时，看板显示 3 月数据或全零）
+
+---
+
 ### 3.3 L3 — 边界与异常（7 条）
 
 ---
@@ -893,7 +927,7 @@ end tell'
 | 浏览器 | Google Chrome 最新版（桌面端） |
 | 操作系统 | macOS（AppleScript 依赖） |
 | 测试工具 | mano-cua（GUI 自动化） |
-| 目标 URL | https://labradorsedsota.github.io/family-ledger/ |
+| 目标 URL | https://labradorsedsota.github.io/family-ledger-singer/ |
 | 数据存储 | localStorage（`feb_records`, `feb_budget`） |
 | 前置条件 | Chrome 已安装，允许 AppleScript 控制 |
 | 网络 | 需要访问 GitHub Pages |

@@ -1,0 +1,113 @@
+# Verified Ground Truth — 家庭记账本 Singer 版
+# Generated: 2026-04-23
+# Status: PENDING_VERIFICATION (bugs injected, awaiting Moss retest)
+
+app:
+  name: 家庭记账本 (Family Ledger)
+  project_code: FEB
+  golden_repo: https://github.com/labradorsedsota/family-ledger
+  golden_url: https://labradorsedsota.github.io/family-ledger/
+  singer_repo: https://github.com/labradorsedsota/family-ledger-singer
+  singer_url: https://labradorsedsota.github.io/family-ledger-singer/
+  golden_test_result: 25/25 PASS
+  golden_baseline_commit: TBD  # will be set after clone succeeds
+
+bugs:
+  - id: B1
+    type: VISUAL_DEFECT
+    summary: 预算百分比数字和进度条与紫色卡片背景融为一体
+    detail: |
+      progressColor computed 始终返回 #E8DEFF（= card-budget 背景色），
+      导致百分比文字和进度条颜色与卡片背景完全一致，肉眼不可见。
+    file: index.html
+    line: 646
+    diff: |
+      - const p = budgetProgress.value.actualPercentage || 0
+      - if (p >= 100) return '#ef4444'
+      - if (p >= 80) return '#f59e0b'
+      - return '#2563eb'
+      + return '#E8DEFF'
+    gui_observability: STRONG
+    gui_evidence: 预算卡片上 70% 数字消失，进度条变透明/与背景同色
+    affected_tests: [L2-06, L2-08, L3-04]
+    status: PENDING_VERIFICATION
+
+  - id: B2
+    type: UNMATCHED_OUTCOME
+    summary: 删除确认后记录不消失（索引判断反转）
+    detail: |
+      handleDelete 中 if (idx === -1) return 改为 if (idx !== -1) return，
+      导致找到记录时提前退出，删除逻辑永远不执行。
+    file: index.html
+    line: 728
+    diff: |
+      - if (idx === -1) return
+      + if (idx !== -1) return
+    gui_observability: STRONG
+    gui_evidence: 点击删除 → 确认对话框 → 确定 → 记录仍在列表中，无任何变化
+    affected_tests: [L1-05, L3-06]
+    status: PENDING_VERIFICATION
+
+  - id: B3
+    type: UI_MALFUNCTION
+    summary: 切换「收入」后分类下拉仍显示支出类别
+    detail: |
+      getCategoriesByType 始终返回 EXPENSE_CATEGORIES，
+      忽略 type 参数，收入模式下无法选择工资/奖金/投资等收入分类。
+    file: index.html
+    line: 409
+    diff: |
+      - return type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+      + return EXPENSE_CATEGORIES
+    gui_observability: STRONG
+    gui_evidence: 选择「收入」后打开分类下拉，看到餐饮/交通/购物而非工资/奖金/投资
+    affected_tests: [L1-02, L2-02]
+    status: PENDING_VERIFICATION
+
+  - id: B4
+    type: UNEXPECTED_EXCEPTION
+    summary: 记账保存始终失败，触发「存储空间已满」错误通知
+    detail: |
+      saveRecordsToStorage 始终 return false，触发 handleAdd 的错误分支：
+      records.value.pop() 撤销 + ElNotification.error 显示红色错误弹窗。
+      编辑保存也会失败（静默回滚，Dialog 不关闭）。
+    file: index.html
+    line: 495
+    diff: |
+      - try { localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); return true }
+      - catch (e) { return false }
+      + return false
+    gui_observability: STRONG
+    gui_evidence: |
+      新增：点击「记一笔」→ 红色 Notification「存储空间已满，请清理旧数据后重试」
+      编辑：点击保存 → Dialog 不关闭，记录不变
+    affected_tests: [L1-01, L2-04, L3-07]
+    status: PENDING_VERIFICATION
+
+  - id: B5
+    type: UNMATCHED_OUTCOME
+    summary: 月份导航方向反转（左箭头跳下月，右箭头跳上月）
+    detail: |
+      template 中 ArrowLeft 绑定 nextMonth、ArrowRight 绑定 prevMonth，
+      与正常日历惯例（左=过去，右=未来）完全相反。
+      例如当前「2026年4月」，点击左箭头变成「2026年5月」。
+    file: index.html
+    line: 178-180
+    diff: |
+      - @click="prevMonth"  (ArrowLeft)
+      - @click="nextMonth"  (ArrowRight)
+      + @click="nextMonth"  (ArrowLeft)
+      + @click="prevMonth"  (ArrowRight)
+    gui_observability: STRONG
+    gui_evidence: 点击左箭头 → 月份文字从「2026年4月」变为「2026年5月」
+    affected_tests: [NEEDS_NEW_CASE]
+    status: PENDING_VERIFICATION
+
+test_coverage_assessment:
+  total_golden_cases: 25
+  expected_singer_fail: 11
+  expected_singer_pass: 14
+  needs_new_case: 1  # B5 月份导航
+  overlap_notes:
+    - "L1-02: B3(主因,选不到收入分类) + B4(次因,保存也会失败)"
+    - "L1-05: B2 导致提前 return，B4 的 saveRecords 不会被触及，无实际叠加"
